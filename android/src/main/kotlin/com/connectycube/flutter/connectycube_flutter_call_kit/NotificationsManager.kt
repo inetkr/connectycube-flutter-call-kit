@@ -60,19 +60,24 @@ fun showCallNotification(
 
     var ringtone: Uri
 
-    val customRingtone = getString(context, "ringtone")
-    if (!TextUtils.isEmpty(customRingtone)) {
-        ringtone = Uri.parse("android.resource://" + context.packageName + "/raw/" + customRingtone)
+    var customRingtone = true
+    Log.d("NotificationsManager", "customRingtone $customRingtone")
+    if (customRingtone) {
+        ringtone = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.ringtone)
+        Log.d("NotificationsManager", "ringtone 1 $ringtone")
     } else {
         ringtone = Settings.System.DEFAULT_RINGTONE_URI
     }
 
-    Log.d("NotificationsManager", "ringtone: $ringtone")
-
-    val isVideoCall = callType == 1
+    Log.d("NotificationsManager", "ringtone 2 $ringtone")
 
     val callTypeTitle =
-        String.format(CALL_TYPE_PLACEHOLDER, if (isVideoCall) "Video" else "Audio")
+        String.format(CALL_TYPE_PLACEHOLDER, if (callType == 1 || callType == 2) "Video" else "Audio")
+    val builder: NotificationCompat.Builder = if (callType != 1) {
+        createPluskitNotification(context, callInitiatorName, ringtone, pendingIntent)
+    } else {
+        createCallNotification(context, callInitiatorName, callTypeTitle, pendingIntent, ringtone)
+    }
 
     val callData = Bundle()
     callData.putString(EXTRA_CALL_ID, callId)
@@ -85,16 +90,27 @@ fun showCallNotification(
 
     val defaultPhoto = getDefaultPhoto(context)
 
-    val builder: NotificationCompat.Builder =
-        createCallNotification(
-            context,
-            callInitiatorName,
-            callTypeTitle,
-            pendingIntent,
-            ringtone,
-            isVideoCall,
-            callData
-        )
+    // Add actions
+    addCallRejectAction(
+        context,
+        builder,
+        callId,
+        callType,
+        callInitiatorId,
+        callInitiatorName,
+        callOpponents,
+        userInfo
+    )
+    addCallAcceptAction(
+        context,
+        builder,
+        callId,
+        callType,
+        callInitiatorId,
+        callInitiatorName,
+        callOpponents,
+        userInfo
+    )
 
     // Add full screen intent (to show on lock screen)
     addCallFullScreenIntent(
@@ -113,12 +129,15 @@ fun showCallNotification(
     addCancelCallNotificationIntent(
         context,
         builder,
-        callId.hashCode(),
-        callData
+        callId,
+        callType,
+        callInitiatorId,
+        callInitiatorName,
+        userInfo
     )
 
     // Set small icon for notification
-    setNotificationSmallIcon(context, builder, isVideoCall)
+    setNotificationSmallIcon(context, builder, userInfo)
 
     // Set notification color accent
     setNotificationColor(context, builder)
@@ -231,6 +250,104 @@ fun createCallNotification(
     return notificationBuilder
 }
 
+fun createPluskitNotification(
+    context: Context,
+    title: String,
+    ringtone: Uri,
+    pendingIntent: PendingIntent,
+): NotificationCompat.Builder {
+    val notificationBuilder = NotificationCompat.Builder(context, CALL_CHANNEL_ID)
+    notificationBuilder
+        .setDefaults(NotificationCompat.DEFAULT_VIBRATE)
+        .setContentTitle(title)
+        .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+        .setAutoCancel(true)
+        .setOngoing(true)
+        .setCategory(NotificationCompat.CATEGORY_CALL)
+        .setContentIntent(pendingIntent)
+        .setSound(ringtone)
+        .setPriority(NotificationCompat.PRIORITY_MAX)
+        .setTimeoutAfter(200)
+    return notificationBuilder
+}
+
+fun addCallRejectAction(
+    context: Context,
+    notificationBuilder: NotificationCompat.Builder,
+    callId: String,
+    callType: Int,
+    callInitiatorId: Int,
+    callInitiatorName: String,
+    opponents: ArrayList<Int>,
+    userInfo: String
+) {
+    val bundle = Bundle()
+    bundle.putString(EXTRA_CALL_ID, callId)
+    bundle.putInt(EXTRA_CALL_TYPE, callType)
+    bundle.putInt(EXTRA_CALL_INITIATOR_ID, callInitiatorId)
+    bundle.putString(EXTRA_CALL_INITIATOR_NAME, callInitiatorName)
+    bundle.putIntegerArrayList(EXTRA_CALL_OPPONENTS, opponents)
+    bundle.putString(EXTRA_CALL_USER_INFO, userInfo)
+
+    val declinePendingIntent: PendingIntent = PendingIntent.getBroadcast(
+        context,
+        callId.hashCode(),
+        Intent(context, EventReceiver::class.java)
+            .setAction(ACTION_CALL_REJECT)
+            .putExtras(bundle),
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE else PendingIntent.FLAG_UPDATE_CURRENT
+    )
+    val declineAction: NotificationCompat.Action = NotificationCompat.Action.Builder(
+        context.resources.getIdentifier(
+            "ic_menu_close_clear_cancel",
+            "drawable",
+            context.packageName
+        ),
+        getColorizedText("거절", "#E02B00"),
+        declinePendingIntent
+    )
+        .build()
+
+    notificationBuilder.addAction(declineAction)
+}
+
+fun addCallAcceptAction(
+    context: Context,
+    notificationBuilder: NotificationCompat.Builder,
+    callId: String,
+    callType: Int,
+    callInitiatorId: Int,
+    callInitiatorName: String,
+    opponents: ArrayList<Int>,
+    userInfo: String
+) {
+    val bundle = Bundle()
+    bundle.putString(EXTRA_CALL_ID, callId)
+    bundle.putInt(EXTRA_CALL_TYPE, callType)
+    bundle.putInt(EXTRA_CALL_INITIATOR_ID, callInitiatorId)
+    bundle.putString(EXTRA_CALL_INITIATOR_NAME, callInitiatorName)
+    bundle.putIntegerArrayList(EXTRA_CALL_OPPONENTS, opponents)
+    bundle.putString(EXTRA_CALL_USER_INFO, userInfo)
+
+    val acceptPendingIntent: PendingIntent = PendingIntent.getBroadcast(
+        context,
+        callId.hashCode(),
+        Intent(context, EventReceiver::class.java)
+            .setAction(ACTION_CALL_ACCEPT)
+            .putExtras(bundle),
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE else PendingIntent.FLAG_UPDATE_CURRENT
+    )
+    val acceptAction: NotificationCompat.Action = NotificationCompat.Action.Builder(
+        context.resources.getIdentifier("ic_menu_call", "drawable", context.packageName),
+        getColorizedText("수락", "#4CB050"),
+        acceptPendingIntent
+    )
+        .build()
+    notificationBuilder.addAction(acceptAction)
+}
+
+
+
 fun getAcceptCallIntent(
     context: Context,
     callData: Bundle,
@@ -294,16 +411,27 @@ fun addCallFullScreenIntent(
 fun addCancelCallNotificationIntent(
     appContext: Context?,
     notificationBuilder: NotificationCompat.Builder,
-    requestCode: Int,
-    callData: Bundle
+    callId: String,
+    callType: Int,
+    callInitiatorId: Int,
+    callInitiatorName: String,
+    userInfo: String
 ) {
+    val bundle = Bundle()
+    bundle.putString(EXTRA_CALL_ID, callId)
+    bundle.putInt(EXTRA_CALL_TYPE, callType)
+    bundle.putInt(EXTRA_CALL_INITIATOR_ID, callInitiatorId)
+    bundle.putString(EXTRA_CALL_INITIATOR_NAME, callInitiatorName)
+    bundle.putString(EXTRA_CALL_USER_INFO, userInfo)
+
+
 
     val deleteCallNotificationPendingIntent = PendingIntent.getBroadcast(
         appContext,
-        requestCode,
+        callId.hashCode(),
         Intent(appContext, EventReceiver::class.java)
             .setAction(ACTION_CALL_NOTIFICATION_CANCELED)
-            .putExtras(callData),
+            .putExtras(bundle),
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE else PendingIntent.FLAG_UPDATE_CURRENT
     )
     notificationBuilder.setDeleteIntent(deleteCallNotificationPendingIntent)
@@ -328,39 +456,14 @@ fun createCallNotificationChannel(notificationManager: NotificationManagerCompat
     }
 }
 
-fun setNotificationSmallIcon(
-    context: Context,
-    notificationBuilder: NotificationCompat.Builder,
-    isVideoCall: Boolean
-) {
-    val appMetadata = context.packageManager.getApplicationInfo(
-        context.packageName,
-        PackageManager.GET_META_DATA
-    ).metaData
-
-    var iconId =
-        if (isVideoCall) appMetadata.getInt("com.connectycube.flutter.connectycube_flutter_call_kit.video_call_notification_icon") else appMetadata.getInt(
-            "com.connectycube.flutter.connectycube_flutter_call_kit.audio_call_notification_icon"
-        )
-    if (iconId == 0) {
-        iconId =
-            appMetadata.getInt("com.connectycube.flutter.connectycube_flutter_call_kit.app_notification_icon")
+fun setNotificationSmallIcon(context: Context, notificationBuilder: NotificationCompat.Builder, userInfo: String) {
+    val json = JSONObject(userInfo)
+    val appType = json.optString("app_type", "")
+    if(appType == "celeb_app"){
+        notificationBuilder.setSmallIcon(R.drawable.ic_celeb_icon)
+    }else{
+        notificationBuilder.setSmallIcon(R.drawable.ic_notification)
     }
-
-    if (iconId == 0) {
-        try {
-            val customIconOld = getString(context, "notification_icon")
-            iconId = context.resources.getIdentifier(customIconOld, "drawable", context.packageName)
-        } catch (e: Exception) {
-            iconId = context.applicationInfo.icon
-        }
-    }
-
-    if (iconId == 0) {
-        iconId = context.applicationInfo.icon
-    }
-
-    notificationBuilder.setSmallIcon(iconId)
 }
 
 fun setNotificationLargeIcon(
@@ -372,21 +475,15 @@ fun setNotificationLargeIcon(
 
 fun setNotificationColor(context: Context, notificationBuilder: NotificationCompat.Builder) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        val color = getString(context, "color")
-
-        if (!TextUtils.isEmpty(color)) {
-            notificationBuilder.color = Color.parseColor(color)
+        val accentID = context.resources.getIdentifier(
+            "call_notification_color_accent",
+            "color",
+            context.packageName
+        )
+        if (accentID != 0) {
+            notificationBuilder.color = context.resources.getColor(accentID, null)
         } else {
-            val accentID = context.resources.getIdentifier(
-                "call_notification_color_accent",
-                "color",
-                context.packageName
-            )
-            if (accentID != 0) {
-                notificationBuilder.color = context.resources.getColor(accentID, null)
-            } else {
-                notificationBuilder.color = Color.parseColor("#4CAF50")
-            }
+            notificationBuilder.color = Color.parseColor("#4CAF50")
         }
     }
 }

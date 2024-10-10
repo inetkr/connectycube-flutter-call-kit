@@ -56,7 +56,13 @@ class IncomingCallActivity : Activity() {
     override fun onCreate(@Nullable savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        setContentView(resources.getIdentifier("activity_incoming_call", "layout", packageName))
+        processIncomingData(intent)
+        if(callType == 2){
+            setContentView(resources.getIdentifier("activity_incoming_pluskit", "layout", packageName))
+        }else{
+            setContentView(resources.getIdentifier("activity_incoming_call", "layout", packageName))
+        }
+//        setContentView(resources.getIdentifier("activity_incoming_call", "layout", packageName))
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
@@ -101,6 +107,19 @@ class IncomingCallActivity : Activity() {
         initUi()
         initCallStateReceiver()
         registerCallStateReceiver()
+        if(callType == 2){
+            val countValue : TextView =  findViewById(resources.getIdentifier("count_down_txt", "id", packageName))
+            onStartCall(null)
+//            timer = object : CountDownTimer(0, 1000){
+//                override fun onTick(remaining: Long) {
+//                    val formattedRemaining = String.format("%02d", remaining / 1000)
+//                    countValue.text = formattedRemaining
+//                }
+//                override fun onFinish() {
+//                    onStartCall(null)
+//                }
+//            }
+        }
     }
 
     private fun initCallStateReceiver() {
@@ -162,45 +181,42 @@ class IncomingCallActivity : Activity() {
     private fun initUi() {
         val callTitleTxt: TextView =
             findViewById(resources.getIdentifier("user_name_txt", "id", packageName))
+        val price: TextView =
+            findViewById(resources.getIdentifier("user_price_txt", "id", packageName))
+
+
+        val avatar: ImageView =
+            findViewById(resources.getIdentifier("user_avatar", "id", packageName))
+        var obj = JSONObject(callUserInfo)
+        var caller = obj?.getString("caller")!!
+        var callerObj = JSONObject(caller);
+        var callerAvatar = callerObj?.getString("avatar")!!
+
+        var callHistory = obj?.getString("call_history")!!
+        var callHistoryObj = JSONObject(callHistory);
+        var callPrice = callHistoryObj?.getString("pay_per_minute")!!
+
+        Glide.with(this).load(callerAvatar).placeholder(R.drawable.default_avatar)
+            .into(avatar)
         callTitleTxt.text = callInitiatorName
-        val callSubTitleTxt: TextView =
-            findViewById(resources.getIdentifier("call_type_txt", "id", packageName))
-        callSubTitleTxt.text =
-            String.format(CALL_TYPE_PLACEHOLDER, if (callType == 1) "Video" else "Audio")
-
-        val callAcceptButton: ImageView =
-            findViewById(resources.getIdentifier("start_call_btn", "id", packageName))
-        val acceptButtonIconName = if (callType == 1) "ic_video_call_start" else "ic_call_start"
-        callAcceptButton.setImageResource(
-            resources.getIdentifier(
-                acceptButtonIconName,
-                "drawable",
-                packageName
-            )
-        )
-
-        val avatarImg: ShapeableImageView =
-            findViewById(resources.getIdentifier("avatar_img", "id", packageName))
-
-        val defaultPhotoResId = getPhotoPlaceholderResId(applicationContext)
-
-        if (!TextUtils.isEmpty(callPhoto)) {
-            Glide.with(applicationContext)
-                .load(callPhoto)
-                .error(defaultPhotoResId)
-                .placeholder(defaultPhotoResId)
-                .into(avatarImg)
-        } else {
-            avatarImg.setImageResource(defaultPhotoResId)
+        if(callType == 1){
+            price.text = "수신 시 1분당 ${callPrice}스타가 적립됩니다."
         }
+        else if(callType == 2){
+            price.text = "연결시 1분당 ${callPrice}스타가 적립됩니다."
+        }
+    }
 
-        val acceptButtonAnimation: RippleBackground =
-            findViewById(resources.getIdentifier("accept_button_animation", "id", packageName))
-        acceptButtonAnimation.startRippleAnimation()
+    override fun onStart() {
+        super.onStart()
+//        if(callType == 2)
+//            timer.start()
+    }
 
-        val rejectButtonAnimation: RippleBackground =
-            findViewById(resources.getIdentifier("reject_button_animation", "id", packageName))
-        rejectButtonAnimation.startRippleAnimation()
+    override fun onStop() {
+        super.onStop()
+//        if(callType == 2)
+//            timer.cancel()
     }
 
     // calls from layout file

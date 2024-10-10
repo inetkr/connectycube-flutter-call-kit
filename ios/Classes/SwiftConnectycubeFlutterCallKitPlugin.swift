@@ -101,11 +101,14 @@ public class SwiftConnectycubeFlutterCallKitPlugin: NSObject, FlutterPlugin {
                 result(error == nil)
             }
         }
-        else if call.method == "reportCallAccepted" {
-            guard let arguments = arguments, let callId = arguments["session_id"] as? String else {
-                result(FlutterError(code: "invalid_argument", message: "session_id was not provided.", details: nil))
-                return
-            }
+        else if(call.method == "reportCallAccepted"){
+                    let callId = arguments["session_id"] as! String
+                    let callType = arguments["call_type"] as! Int
+                    let videoEnabled = callType == 1
+
+                    SwiftConnectycubeFlutterCallKitPlugin.callController.startCall(handle: callId, videoEnabled: videoEnabled, uuid: callId)
+                    result(true)
+                }
             
             SwiftConnectycubeFlutterCallKitPlugin.callController.answerCall(uuid: callId)
             result(true)

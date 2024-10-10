@@ -20,7 +20,7 @@ const val REJECTED_IN_BACKGROUND = "rejected_in_background"
 const val ACCEPTED_IN_BACKGROUND = "accepted_in_background"
 const val INCOMING_IN_BACKGROUND = "incoming_in_background"
 
-const val CALL_TYPE_PLACEHOLDER = "Incoming %s call"
+const val CALL_TYPE_PLACEHOLDER = "영상채팅 요청이 왔습니다"
 
 const val CALL_STATE_PENDING: String = "pending"
 const val CALL_STATE_ACCEPTED: String = "accepted"

@@ -19,14 +19,14 @@ import androidx.annotation.NonNull
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.connectycube.flutter.connectycube_flutter_call_kit.background_isolates.ConnectycubeFlutterBgPerformingService
 import com.connectycube.flutter.connectycube_flutter_call_kit.utils.*
+import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.messaging.FirebaseMessaging
 import io.flutter.embedding.engine.FlutterShellArgs
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
-import io.flutter.plugin.common.EventChannel
-import io.flutter.plugin.common.MethodCall
-import io.flutter.plugin.common.MethodChannel
+
+import io.flutter.plugin.common.*
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry
@@ -180,12 +180,12 @@ class ConnectycubeFlutterCallKitPlugin : FlutterPlugin, MethodCallHandler,
                 try {
                     @Suppress("UNCHECKED_CAST") val arguments: Map<String, Any> =
                         call.arguments as Map<String, Any>
-                    val ringtone = arguments["ringtone"] as String?
+                    val ringtone = arguments["ringtone"] as Boolean?
                     val icon = arguments["icon"] as String?
                     val notificationIcon = arguments["notification_icon"] as String?
                     val color = arguments["color"] as String?
 
-                    putString(applicationContext!!, "ringtone", ringtone)
+                    putBoolean(applicationContext!!, "ringtone", ringtone == true)
                     putString(applicationContext!!, "icon", icon)
                     putString(applicationContext!!, "notification_icon", notificationIcon)
                     putString(applicationContext!!, "color", color)
