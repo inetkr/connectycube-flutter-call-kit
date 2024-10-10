@@ -146,19 +146,19 @@ fun showCallNotification(
 
     createCallNotificationChannel(notificationManager, ringtone)
 
-    if (TextUtils.isEmpty(callPhoto)) {
-        setNotificationLargeIcon(builder, defaultPhoto)
-        postNotification(callId.hashCode(), notificationManager, builder)
-    } else {
-        loadPhotoAndPostNotification(
-            context,
-            notificationManager,
-            builder,
-            callId.hashCode(),
-            callPhoto!!,
-            defaultPhoto
-        )
-    }
+//    if (TextUtils.isEmpty(callPhoto)) {
+//        setNotificationLargeIcon(builder, defaultPhoto)
+//        postNotification(callId.hashCode(), notificationManager, builder)
+//    } else {
+//        loadPhotoAndPostNotification(
+//            context,
+//            notificationManager,
+//            builder,
+//            callId.hashCode(),
+//            callPhoto!!,
+//            defaultPhoto
+//        )
+//    }
 }
 
 fun postNotification(
