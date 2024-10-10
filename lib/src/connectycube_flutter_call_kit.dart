@@ -62,7 +62,7 @@ class ConnectycubeFlutterCallKit {
       {CallEventHandler? onCallAccepted,
       CallEventHandler? onCallRejected,
       CallEventHandler? onCallIncoming,
-      String? ringtone,
+      bool? useRingTone,
       String? icon,
       @Deprecated('Use `AndroidManifest.xml` meta-data instead')
       String? notificationIcon,
@@ -72,7 +72,7 @@ class ConnectycubeFlutterCallKit {
     _onCallIncoming = onCallIncoming;
 
     updateConfig(
-        ringtone: ringtone,
+        ringtone: useRingTone,
         icon: icon,
         notificationIcon: notificationIcon,
         color: color);
@@ -160,7 +160,7 @@ class ConnectycubeFlutterCallKit {
   /// [notificationIcon] - the name of the image in the `drawable` folder, uses as Notification Small Icon for Android, ignored for iOS
   /// [color] - the color in the format '#RRGGBB', uses as an Android Notification accent color, ignored for iOS
   Future<void> updateConfig(
-      {String? ringtone,
+      {bool? ringtone,
       String? icon,
       @Deprecated('Use `AndroidManifest.xml` meta-data instead')
       String? notificationIcon,
