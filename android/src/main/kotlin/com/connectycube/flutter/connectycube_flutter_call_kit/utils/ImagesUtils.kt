@@ -14,7 +14,7 @@ fun getPhotoPlaceholderResId(context: Context): Int {
     val customAvatarResName = getString(context.applicationContext, "icon")
     val defaultImgResId =
         context.resources.getIdentifier(
-            "photo_placeholder",
+            "ic_notification",
             "drawable",
             context.packageName
         )

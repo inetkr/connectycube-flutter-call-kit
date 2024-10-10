@@ -90,7 +90,7 @@ fun showCallNotification(
     callData.putString(EXTRA_CALL_PHOTO, callPhoto)
     callData.putString(EXTRA_CALL_USER_INFO, userInfo)
 
-    val defaultPhoto = getDefaultPhoto(context)
+//    val defaultPhoto = getDefaultPhoto(context)
 
     // Add actions
     addCallRejectAction(
@@ -145,7 +145,7 @@ fun showCallNotification(
     setNotificationColor(context, builder)
 
     createCallNotificationChannel(notificationManager, ringtone)
-
+    postNotification(callId.hashCode(), notificationManager, builder)
 //    if (TextUtils.isEmpty(callPhoto)) {
 //        setNotificationLargeIcon(builder, defaultPhoto)
 //        postNotification(callId.hashCode(), notificationManager, builder)
