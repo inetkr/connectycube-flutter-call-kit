@@ -23,9 +23,11 @@ import com.bumptech.glide.load.resource.bitmap.CircleCrop
 import com.connectycube.flutter.connectycube_flutter_call_kit.utils.getDefaultPhoto
 import com.connectycube.flutter.connectycube_flutter_call_kit.utils.getPhotoPlaceholderResId
 import com.connectycube.flutter.connectycube_flutter_call_kit.utils.getString
+import com.connectycube.flutter.connectycube_flutter_call_kit.utils.getColorizedText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 
 const val CALL_CHANNEL_ID = "calls_channel_id"
 const val CALL_CHANNEL_NAME = "Calls"
@@ -216,29 +218,17 @@ fun getLaunchIntent(context: Context): Intent? {
 fun createCallNotification(
     context: Context,
     title: String,
-    callName: String?,
+    text: String?,
     pendingIntent: PendingIntent,
     ringtone: Uri,
-    isVideoCall: Boolean,
-    callData: Bundle
+    //isVideoCall: Boolean,
+    //callData: Bundle
 ): NotificationCompat.Builder {
-    val person = Person.Builder()
-        .setName(title)
-        .setImportant(true)
-        .build()
-
-    val style = NotificationCompat.CallStyle.forIncomingCall(
-        person,
-        getRejectCallIntent(context, callData, title.hashCode()),
-        getAcceptCallIntent(context, callData, title.hashCode())
-    )
-    style.setIsVideo(isVideoCall)
-
     val notificationBuilder = NotificationCompat.Builder(context, CALL_CHANNEL_ID)
     notificationBuilder
-        .setContentText(callName)
-        .setStyle(style)
-        .addPerson(person)
+        .setDefaults(NotificationCompat.DEFAULT_VIBRATE)
+        .setContentTitle(title)
+        .setContentText(text)
         .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
         .setAutoCancel(true)
         .setOngoing(true)
@@ -246,7 +236,7 @@ fun createCallNotification(
         .setContentIntent(pendingIntent)
         .setSound(ringtone)
         .setPriority(NotificationCompat.PRIORITY_MAX)
-        .setTimeoutAfter(60000)
+        .setTimeoutAfter(25000)
     return notificationBuilder
 }
 
