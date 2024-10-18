@@ -278,6 +278,15 @@ class ConnectycubeFlutterCallKitPlugin : FlutterPlugin, MethodCallHandler,
                 }
             }
 
+            "backToForeground" -> {
+                try {
+                    backToForeground()
+                    result.success(null)
+                } catch (e: Exception) {
+                    result.error("ERROR", e.message, "")
+                }
+            }
+
             "clearCallData" -> {
                 try {
                     @Suppress("UNCHECKED_CAST") val arguments: Map<String, Any> =
@@ -344,6 +353,31 @@ class ConnectycubeFlutterCallKitPlugin : FlutterPlugin, MethodCallHandler,
                 mainActivity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
             }
         }
+    }
+
+    private fun backToForeground() {
+        val context = applicationContext  ?: return
+        val packageName = context.packageName
+
+        // Lấy intent của ứng dụng
+        val focusIntent = context.packageManager.getLaunchIntentForPackage(packageName)?.cloneFilter()
+            ?: return
+
+        val activity = mainActivity
+        val isOpened = activity != null
+
+        Log.d("ConnectycubeCallKit", "backToForeground CHECKER, app isOpened? ${if (isOpened) "true" else "false"}")
+
+        if (isOpened) {
+            // Nếu app đang mở, đưa activity lên foreground
+            focusIntent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+            activity?.startActivity(focusIntent)
+        } else {
+            // Nếu app đang ở background hoặc chưa mở, khởi động lại với các flags đặc biệt
+            focusIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK )
+            context.startActivity(focusIntent)
+        }
+        Log.d("ConnectycubeCallKit", "backToForeground CHECKER, app DONE")
     }
 
 
