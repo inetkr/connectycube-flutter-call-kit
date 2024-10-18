@@ -356,15 +356,28 @@ class ConnectycubeFlutterCallKitPlugin : FlutterPlugin, MethodCallHandler,
     }
 
     private fun backToForeground() {
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-//            mainActivity?.setShowWhenLocked(isVisible)
-//        } else {
-//            if (isVisible) {
-//                mainActivity?.window?.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
-//            } else {
-//                mainActivity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
-//            }
-//        }
+        val context = applicationContext  ?: return
+        val packageName = context.packageName
+
+        // Lấy intent của ứng dụng
+        val focusIntent = context.packageManager.getLaunchIntentForPackage(packageName)?.cloneFilter()
+            ?: return
+
+        val activity = mainActivity
+        val isOpened = activity != null
+
+        Log.d("ConnectycubeCallKit", "backToForeground CHECKER, app isOpened? ${if (isOpened) "true" else "false"}")
+
+        if (isOpened) {
+            // Nếu app đang mở, đưa activity lên foreground
+            focusIntent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+            activity?.startActivity(focusIntent)
+        } else {
+            // Nếu app đang ở background hoặc chưa mở, khởi động lại với các flags đặc biệt
+            focusIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK )
+            context.startActivity(focusIntent)
+        }
+        Log.d("ConnectycubeCallKit", "backToForeground CHECKER, app DONE")
     }
 
 
