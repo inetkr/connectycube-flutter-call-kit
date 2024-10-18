@@ -289,6 +289,12 @@ class ConnectycubeFlutterCallKit {
     });
   }
 
+  static Future<void> backToForeground() async {
+    if (!Platform.isAndroid) return;
+
+    return _methodChannel.invokeMethod("backToForeground", {});
+  }
+
   /// Report that the current active call has been ended by your application
   static Future<void> reportCallMuted(
       {required String? sessionId, required bool? muted}) async {

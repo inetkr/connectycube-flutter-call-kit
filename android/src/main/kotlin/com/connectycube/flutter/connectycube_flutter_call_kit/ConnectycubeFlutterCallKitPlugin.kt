@@ -278,6 +278,15 @@ class ConnectycubeFlutterCallKitPlugin : FlutterPlugin, MethodCallHandler,
                 }
             }
 
+            "backToForeground" -> {
+                try {
+                    backToForeground()
+                    result.success(null)
+                } catch (e: Exception) {
+                    result.error("ERROR", e.message, "")
+                }
+            }
+
             "clearCallData" -> {
                 try {
                     @Suppress("UNCHECKED_CAST") val arguments: Map<String, Any> =
@@ -344,6 +353,18 @@ class ConnectycubeFlutterCallKitPlugin : FlutterPlugin, MethodCallHandler,
                 mainActivity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
             }
         }
+    }
+
+    private fun backToForeground() {
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+//            mainActivity?.setShowWhenLocked(isVisible)
+//        } else {
+//            if (isVisible) {
+//                mainActivity?.window?.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
+//            } else {
+//                mainActivity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
+//            }
+//        }
     }
 
 
